@@ -1,0 +1,6 @@
+@RELATION hepatitis
+
+@ATTRIBUTE Class {DIE,LIVE}
+
+@DATA
+LIVE
