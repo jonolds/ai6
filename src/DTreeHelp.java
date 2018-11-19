@@ -1,5 +1,11 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.*;
 
 abstract class DTreeHelp extends SupervisedLearner {
 	
@@ -16,6 +22,20 @@ abstract class DTreeHelp extends SupervisedLearner {
 		for(int i = 1; i < list.size(); i++)
 			System.out.print(", " + list.get(i));
 		System.out.println();
+	}
+	
+	static String toString(List<Integer> list) {
+		return list.stream().map(x->x.toString()).collect(Collectors.joining(", "));
+	}
+	
+	static String toString(int[] list) {
+		return Arrays.stream(list).mapToObj(x->String.valueOf(x)).collect(Collectors.joining(", "));
+	}
+	
+	static void appendToFile(String s, String filename) throws FileNotFoundException {
+		PrintWriter br = new PrintWriter(new FileOutputStream(new File(filename), true));
+		br.append(s + "\n");
+		br.close();
 	}
 	
 	static <T>void println(T t) {
@@ -49,7 +69,7 @@ abstract class DTreeHelp extends SupervisedLearner {
 		System.out.println();
 	}
 	
-	static int[] randoHomoCols(Mat m, Random r) {
+	static int[] randoHomoCols(Matrix m, Random r) {
 		return r.ints(0, m.cols()).distinct().limit(m.cols()).filter(x->!m.isColHomo(x)).toArray();
 	}
 	
@@ -66,12 +86,12 @@ abstract class DTreeHelp extends SupervisedLearner {
 }
 
 class Set {
-	Mat trainF, trainL, testF, testL;
+	Matrix trainF, trainL, testF, testL;
 	Set(String s) {
-		this.trainF = new Mat("data/" + s + "_train_feat.arff");
-		this.trainL = new Mat("data/" + s + "_train_lab.arff");
-		this.testF = new Mat("data/" + s + "_test_feat.arff");
-		this.testL = new Mat("data/" + s + "_test_lab.arff");
+		this.trainF = new Matrix("data/" + s + "_train_feat.arff");
+		this.trainL = new Matrix("data/" + s + "_train_lab.arff");
+		this.testF = new Matrix("data/" + s + "_test_feat.arff");
+		this.testL = new Matrix("data/" + s + "_test_lab.arff");
 //		this.testF = new Mat("data/" + s + "_train_feat.arff");
 //		this.testL = new Mat("data/" + s + "_train_lab.arff");
 	}

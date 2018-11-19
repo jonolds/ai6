@@ -1,4 +1,5 @@
 import java.io.File;
+import java.util.stream.*;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.PrintStream;
@@ -15,7 +16,7 @@ import java.util.Comparator;
 /// corresponding zero-indexed enumeration value. For convenience,
 /// the matrix also stores some meta-data which describes the columns (or attributes)
 /// in the matrix.
-public class Mat {
+public class Matrix {
 	/// Used to represent elements in the matrix for which the value is not known.
 	public static final double UNKNOWN_VALUE = -1e308; 
 
@@ -33,26 +34,26 @@ public class Mat {
 	///    setSize
 	///    newColumn, or
 	///    copyMetaData
-	public Mat() {
+	public Matrix() {
 		this.m_filename    = "";
 		this.m_attr_name   = new ArrayList<String>();
 		this.m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
 		this.m_enum_to_str = new ArrayList<HashMap<Integer, String>>();
 	}
 	
-	public Mat(Mat that, int row) {
+	public Matrix(Matrix that, int row) {
 		this(0, that.cols());
 		this.copyMetaData(that);
 		this.pushRow(that.popRow(row));
 	}
 	
-	public Mat(String fn) {
+	public Matrix(String fn) {
 		this();
 		this.loadARFF(fn);
 	}
 
 	// Clone structure
-	public Mat(int rows, int cols) {
+	public Matrix(int rows, int cols) {
 		this.m_filename    = "";
 		this.m_attr_name   = new ArrayList<String>();
 		this.m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
@@ -61,7 +62,7 @@ public class Mat {
 	}
 
 	// Clone
-	public Mat(Mat that) {
+	public Matrix(Matrix that) {
 		m_filename = that.m_filename;
 		m_attr_name = new ArrayList<String>();
 		m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
@@ -71,13 +72,13 @@ public class Mat {
 	}
 	
 
-	public Mat struct(Mat that) {
-		Mat mat = new Mat(0, that.cols());
+	public Matrix struct(Matrix that) {
+		Matrix mat = new Matrix(0, that.cols());
 		mat.copyMetaData(that);
 		return mat;
 	}
 
-	public Mat(Json n) {
+	public Matrix(Json n) {
 		int rowCount = n.size();
 		int colCount = n.get(0).size();
 		setSize(rowCount, colCount);
@@ -205,7 +206,7 @@ public class Mat {
 		System.out.println();
 	}
 	
-	public void printAll(Mat labs) {
+	public void printAll(Matrix labs) {
 //		System.out.print("\n");
 //		m_attr_name.forEach(x->System.out.print(x.toUpperCase() + ", "));
 //		System.out.print("\n");
@@ -242,7 +243,7 @@ public class Mat {
 			if (j + 1 < cols())
 				os.print(",");
 		}
-//		System.out.print("\n");
+		System.out.print("\n");
 	}
 
 	public void printRow(double[] row, PrintWriter os) {
@@ -342,7 +343,7 @@ public class Mat {
 	/// In other words, it makes a zero-row matrix with the same number
 	/// of columns as "that" matrix. You will need to call newRow or newRows
 	/// to give the matrix some rows.
-	public void copyMetaData(Mat that) {
+	public void copyMetaData(Matrix that) {
 		m_data.clear();
 		m_attr_name = new ArrayList<String>(that.m_attr_name);
 		
@@ -522,13 +523,13 @@ public class Mat {
 		return (m_enum_to_str.get(attr).size() == 0) ? true : false;
 	}
 	/// Copies that matrix
-	void copy(Mat that) {
+	void copy(Matrix that) {
 		setSize(that.rows(), that.cols());
 		copyBlock(0, 0, that, 0, 0, that.rows(), that.cols());
 	}
 
 	/// Returns the mean of the elements in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
-	public double colMean(int col) {
+	public double columnMean(int col) {
 		double sum = 0.0;
 		int count = 0;
 		for (double[] list : m_data) {
@@ -568,7 +569,7 @@ public class Mat {
 	}
 
 	/// Returns the most common value in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
-	public double colMCV(int col) {
+	public double mostCommonValue(int col) {
 		HashMap<Double, Integer> counts = new HashMap<Double, Integer>();
 		for (double[] list : m_data) {
 			double val = list[col];
@@ -590,7 +591,7 @@ public class Mat {
 	}
 
 	/// Copies the specified rectangular portion of that matrix, and puts it in the specified location in this matrix.
-	public void copyBlock(int destRow, int destCol, Mat that, int rowBegin, int colBegin, int rowCount, int colCount) {
+	public void copyBlock(int destRow, int destCol, Matrix that, int rowBegin, int colBegin, int rowCount, int colCount) {
 		if (destRow + rowCount > this.rows() || destCol + colCount > this.cols())
 			throw new IllegalArgumentException("Out of range for destination matrix.");
 		if (rowBegin + rowCount > that.rows() || colBegin + colCount > that.cols())
@@ -608,6 +609,10 @@ public class Mat {
 			for(int j = 0; j < colCount; j++)
 				dest[destCol + j] = source[colBegin + j];
 		}
+	}
+	
+	public double[] copyRow(int row) {
+		return IntStream.range(0, cols()).mapToDouble(x->(this.row(row)[x])).toArray();
 	}
 
 	/// Sets every element in the matrix to the specified value.
@@ -627,7 +632,7 @@ public class Mat {
 	}
 
 	/// Adds every element in that matrix to this one
-	public void addScaled(Mat that, double scalar) {
+	public void addScaled(Matrix that, double scalar) {
 		if(that.rows() != this.rows() || that.cols() != this.cols())
 			throw new IllegalArgumentException("Mismatching size");
 		for (int i = 0; i < rows(); i++) {
@@ -646,7 +651,7 @@ public class Mat {
 	}
 
 	/// Throws Except if that has diff num of cols than this or one of its cols has a diff num of vals.
-	public void checkCompatibility(Mat that) {
+	public void checkCompatibility(Matrix that) {
 		int c = cols();
 		if (that.cols() != c)
 			throw new IllegalArgumentException("Matrices have different number of columns.");
@@ -677,11 +682,11 @@ public class Mat {
 }
 
 class DataSet {
-	Mat trainF, trainL, testF, testL;
+	Matrix trainF, trainL, testF, testL;
 	DataSet(String set) {
-		this.trainF = new Mat("data/" + set + "_train_feat.arff");
-		this.trainL = new Mat("data/" + set + "_train_lab.arff");
-		this.testF = new Mat("data/" + set + "_test_feat.arff");
-		this.testL = new Mat("data/" + set + "_test_lab.arff");
+		this.trainF = new Matrix("data/" + set + "_train_feat.arff");
+		this.trainL = new Matrix("data/" + set + "_train_lab.arff");
+		this.testF = new Matrix("data/" + set + "_test_feat.arff");
+		this.testL = new Matrix("data/" + set + "_test_lab.arff");
 	}
 }
