@@ -11,8 +11,6 @@ abstract class DTreeHelp extends SupervisedLearner {
 			printTree(((Inter)node).b);
 		}
 	}
-
-	
 	static void print(List<Integer> list) {
 		System.out.print(list.get(0));
 		for(int i = 1; i < list.size(); i++)
@@ -54,6 +52,17 @@ abstract class DTreeHelp extends SupervisedLearner {
 	static int[] randoHomoCols(Mat m, Random r) {
 		return r.ints(0, m.cols()).distinct().limit(m.cols()).filter(x->!m.isColHomo(x)).toArray();
 	}
+	
+	
+	void printTree(Node n, int count) {
+		if(n.isLeaf()) System.out.println(count + ") LEAF label:" + ((Leaf)n).label[0]);
+		else {
+			System.out.println(count + ") INTER att:" + ((Inter)n).att + " p:" + ((Inter)n).p + " real:" + ((Inter)n).real);
+			count++;
+			printTree(((Inter)n).a, count);
+			printTree(((Inter)n).b, count);
+		}
+	}
 }
 
 class Set {
@@ -67,7 +76,5 @@ class Set {
 //		this.testL = new Mat("data/" + s + "_train_lab.arff");
 	}
 }
-
-
 
 //mode = IntStream.range(0, l.cols()).mapToDouble(x->l.isReal(x) ? l.colMean(x):l.colMCV(x)).toArray();

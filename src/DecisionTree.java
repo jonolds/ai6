@@ -1,34 +1,26 @@
 import java.util.Random;
 
 class DecisionTree extends DTreeHelp {
-	static Random r = new Random();
+	static Random r;
 	boolean debug = false;
-	DecisionTree() { name = "DecisionTree"; } 
 	Node root;
-	int count = 0;
-	void printTree(Node n, int count) {
-		if(n.isLeaf()) System.out.println(count + ") LEAF label:" + ((Leaf)n).label[0]);
-		else {
-			System.out.println(count + ") INTER att:" + ((Inter)n).att + " p:" + ((Inter)n).p + " real:" + ((Inter)n).real);
-			count++;
-			printTree(((Inter)n).a, count);
-			printTree(((Inter)n).b, count);
-		}
-	}
+	
+	DecisionTree() { name = "DecisionTree"; r = new Random();} 
+	DecisionTree(int seed) { name = "DecisionTree"; r = new Random(seed); }
+
 	
 	void train(Mat f, Mat l) {
-		root = resolve(f, l);
+		root = resolveNode(f, l);
 	}
-	Node resolve(Mat f, Mat l) {
+	Node resolveNode(Mat f, Mat l) {
 		
 		if(l.isColHomo(0))
 			return new Leaf(l.row(0)[0]);
 		else {
 			Mat f1 = new Mat(f), f2 = f1.struct(f), l1 = new Mat(l), l2 = f.struct(l);
 			Data data = new Data();
-			if(canSplit(f1, l1, f2, l2, data)) {
-				return new Inter(data, resolve(f1, l1), resolve(f2, l2), data.real);
-			}
+			if(canSplit(f1, l1, f2, l2, data))
+				return new Inter(data, resolveNode(f1, l1), resolveNode(f2, l2));
 			return new Leaf((l.isReal(0)) ? l.colMean(0) : l.colMCV(0));
 		}
 	}
@@ -51,27 +43,14 @@ class DecisionTree extends DTreeHelp {
 		return foundSplit;
 	}
 	boolean slice(Mat f1, Mat l1, Mat f2, Mat l2, Data data) {
-		for(int i = f1.rows()-1; i > -1; i--) {
-			if(data.real && f1.row(i)[data.at] >= data.p) {
+		for(int i = f1.rows()-1; i > -1; i--)
+			if((data.real && f1.row(i)[data.at] >= data.p) || (!data.real && f1.row(i)[data.at] != data.p)) {
 				f2.pushRow(f1.popRow(i));  
 				l2.pushRow(l1.popRow(i)); 
 			}
-			if(!data.real && f1.row(i)[data.at] != data.p) {
-				f2.pushRow(f1.popRow(i));  
-				l2.pushRow(l1.popRow(i)); 
-			}
-		}
-//		boolean success = (f1.rows() != 0 && f2.rows() != 0) ? true : false;
-//		if(success) {
-//			System.out.println("================");
-//			System.out.println("    a=" + data.at + "   p=" + data.p + "   real=" + data.real);
-//			f1.printAll(l1);
-//			f2.printAll(l2);
-//		}
 		return (f1.rows() != 0 && f2.rows() != 0) ? true : false;
 	}
 	int countMisses(Mat feats, Mat labs) throws Exception {
-//		printTree(root, count);
 		if(feats.rows() != labs.rows()) throw new Exception("Mismatching number of rows");
 		double[] pred = new double[labs.cols()];
 		int miss = 0;
@@ -85,21 +64,11 @@ class DecisionTree extends DTreeHelp {
 	}
 	
 	double[] getLab(double[] f, Node n) {
-		if(n.isLeaf()) return ((Leaf)n).label;
+		if(n.isLeaf()) 
+			return ((Leaf)n).label;
 		Inter in = (Inter)n;
-		if(in.real && (f[in.att] < in.p)) {
-			if (debug) println("at:" + in.att + " REAL in[at]:" + f[in.att] + " < (p)" + in.p + "  -->A");
+		if((in.real && (f[in.att] < in.p)) || (!in.real && (f[in.att] == in.p)))
 			return getLab(f, in.a);
-		}	
-		else if(in.real){
-			if (debug) println("at:" + in.att + " REAL in[at]:" + f[in.att] + " >= (p)" + in.p + "  -->B");
-			return getLab(f, in.b);
-		}
-		else if(!in.real && (f[in.att] == in.p)) {
-			if(debug) println("at:" + in.att + " BIN  in[at]:" + f[in.att] + " == (p)" + in.p + "  -->A");
-			return getLab(f, in.a);
-		}	
-		if(debug) println("at:" + in.att + " BIN  in[at]:" + f[in.att] + " != (p)" + in.p + "  -->B");
 		return getLab(f, in.b);
 	}
 }

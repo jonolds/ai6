@@ -34,21 +34,6 @@ class BaselineLearner extends SupervisedLearner {
 				mode[i] = labels.colMCV(i);
 		}
 	}
-	
-	int countMisses(Mat features, Mat labels) throws Exception {
-		if(features.rows() != labels.rows()) throw new Exception("Mismatching number of rows");
-		double[] pred = new double[labels.cols()];
-		int miss = 0;
-		for(int i = 0; i < features.rows(); i++) {
-			double[] feat = features.row(i);
-			double[] lab = labels.row(i);
-			predict(feat, pred);
-			for(int j = 0; j < lab.length; j++)
-				if(pred[j] != lab[j])
-					miss++;
-		}
-		return miss;
-	}
 
 	double[] predict(double[] in, double[] out) { 
 		Vec.copy(out, mode); 

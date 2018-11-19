@@ -12,7 +12,7 @@ class Main {
 		test(learner, "hep");
 		test(learner, "vow");
 		test(learner, "soy");
-		test(learner, "small");
+//		test(learner, "small");
 	}
 
 	public static void main(String[] args) throws Exception {

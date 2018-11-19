@@ -23,29 +23,19 @@ class Inter extends Node {
 	boolean real;
 	public Node a = null, b = null;
 	
-	Inter(Data data, Node a1, Node b1, boolean cont) { 
+	Inter(Data data, Node a1, Node b1) { 
 		this.real = data.real;
 		this.att = data.at; 
 		this.p = data.p;
 		this.a = a1;
 		this.b = b1;
 	}
-	boolean isLeaf() {
-		return false;
-	}
-	
-
+	boolean isLeaf() { return false; }
 }
 // CLASS LeafNode
 class Leaf extends Node {
 	double[] label = new double[] {1.0};
 	
-	Leaf(double d) {
-		this.label[0] = d;
-//		System.out.println("LEAF - label: " + label[0]);
-	}
-
-	boolean isLeaf() {
-		return true;
-	}
+	Leaf(double d) { this.label[0] = d; }
+	boolean isLeaf() { return true; }
 }
